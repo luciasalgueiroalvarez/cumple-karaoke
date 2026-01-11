@@ -10,10 +10,10 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- ESTILO CSS ACTUALIZADO ---
+# --- ESTILO CSS ACTUALIZADO (Fondo Blanco y Sin Adornos) ---
 st.markdown("""
     <style>
-    /* Fondo blanco en todas las páginas */
+    /* Fondo blanco en toda la app */
     .stApp {
         background-color: #FFFFFF;
     }
@@ -29,16 +29,24 @@ st.markdown("""
         border-radius: 25px;
         border: none;
         font-weight: bold;
+        height: 3em;
     }
-    /* Sidebar blanca */
+    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: #F8F9FA;
+    }
+    /* Ajuste de inputs para que se vean bien en fondo blanco */
+    .stTextInput>div>div>input {
+        background-color: #FDF2F2;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- CONEXIÓN A GOOGLE SHEETS ---
-conn = st.connection("gsheets", type=GSheetsConnection)
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection)
+except Exception as e:
+    st.error(f"Error de configuración en Secrets: {e}")
 
 # --- NAVEGACIÓN ---
 menu = ["🏠 Bienvenida", "🎤 Votar Actuación", "🏆 Ranking", "💌 Dedicatorias"]
@@ -68,8 +76,9 @@ elif choice == "🎤 Votar Actuación":
     st.title("Puntúa el Show 📊")
     
     with st.form("voting_form", clear_on_submit=True):
-        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Nombre...")
+        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Escribe su nombre...")
         
+        st.write("---")
         c1 = st.slider("⭐ Actitud y Energía", 0, 5, 3)
         c2 = st.slider("🎭 Interpretación Dramática", 0, 5, 3)
         c3 = st.slider("🎉 Show y Escena", 0, 5, 3)
@@ -81,21 +90,27 @@ elif choice == "🎤 Votar Actuación":
         if submitted:
             if nombre_artista:
                 try:
-                    # Forzamos la lectura para asegurar conexión
+                    # Leemos la pestaña 'votos'
                     df_actual = conn.read(worksheet="votos", ttl=0)
+                    
+                    puntos_totales = c1 + c2 + c3 + c4 + c5
                     nueva_fila = pd.DataFrame([{
                         "Artista": nombre_artista.strip().upper(),
-                        "Puntos": c1 + c2 + c3 + c4 + c5,
+                        "Puntos": puntos_totales,
                         "Hora": datetime.now().strftime("%H:%M:%S")
                     }])
+                    
                     df_actualizado = pd.concat([df_actual, nueva_fila], ignore_index=True)
                     conn.update(worksheet="votos", data=df_actualizado)
+                    
                     st.balloons()
-                    st.success(f"¡Voto registrado!")
+                    st.success(f"¡Voto registrado para {nombre_artista}!")
                 except Exception as e:
-                    st.error(f"Error al conectar con la base de datos. ¡Avisa a Lu! Detalle: {e}")
+                    st.error("Error al conectar con la base de datos.")
+                    st.info("Asegúrate de que la pestaña del Excel se llame exactamente 'votos'")
+                    st.write(f"Detalle técnico: {e}")
             else:
-                st.warning("Escribe el nombre del artista.")
+                st.warning("Por favor, pon el nombre del artista.")
 
 # --- 3. RANKING ---
 elif choice == "🏆 Ranking":
@@ -104,17 +119,22 @@ elif choice == "🏆 Ranking":
     try:
         df_votos = conn.read(worksheet="votos", ttl=0)
         if not df_votos.empty:
+            # Calculamos la media por artista
             ranking = df_votos.groupby("Artista")["Puntos"].mean().sort_values(ascending=False).head(3)
+            
             cols = st.columns(3)
             medallas = ["🥇", "🥈", "🥉"]
+            
             for i, (artista, puntos) in enumerate(ranking.items()):
                 with cols[i]:
                     st.markdown(f"<h1 style='text-align: center;'>{medallas[i]}</h1>", unsafe_allow_html=True)
-                    st.metric(artista, f"{puntos:.1f}")
+                    st.markdown(f"<p style='text-align: center; font-weight: bold;'>{artista}</p>", unsafe_allow_html=True)
+                    st.metric("Media", f"{puntos:.1f}")
         else:
-            st.info("Aún no hay votos.")
-    except:
-        st.error("Error al cargar el ranking.")
+            st.info("Aún no hay votos registrados.")
+    except Exception as e:
+        st.error("No se pudo cargar el ranking.")
+        st.write(f"Error: {e}")
 
 # --- 4. DEDICATORIAS ---
 elif choice == "💌 Dedicatorias":
@@ -135,20 +155,28 @@ elif choice == "💌 Dedicatorias":
             st.rerun()
 
     with st.form("dedicatoria_form", clear_on_submit=True):
-        nombre_invitado = st.text_input("Tu nombre:")
-        mensaje_texto = st.text_area("Mensaje:")
+        nombre_invitado = st.text_input("Tu nombre (opcional):")
+        mensaje_texto = st.text_area("Tu mensaje para la cumpleañera:")
+        
         if st.form_submit_button("Enviar Mensaje 💌"):
             if mensaje_texto:
                 try:
                     df_msjs = conn.read(worksheet="dedicatorias", ttl=0)
-                    nuevo_msj = pd.DataFrame([{"Nombre": nombre_invitado if nombre_invitado else "Anónimo", "Mensaje": mensaje_texto}])
-                    updated_df = pd.concat([df_msjs, nuevo_msj], ignore_index=True)
-                    conn.update(worksheet="dedicatorias", data=updated_df)
+                    nuevo_msj = pd.DataFrame([{
+                        "Nombre": nombre_invitado if nombre_invitado else "Anónimo", 
+                        "Mensaje": mensaje_texto
+                    }])
+                    df_final = pd.concat([df_msjs, nuevo_msj], ignore_index=True)
+                    conn.update(worksheet="dedicatorias", data=df_final)
                     popup_agradecimiento()
                 except Exception as e:
-                    st.error(f"No se pudo guardar el mensaje. Detalle: {e}")
+                    st.error("No se pudo guardar el mensaje.")
+                    st.write(f"Detalle técnico: {e}")
+            else:
+                st.warning("Escribe algo antes de enviar.")
 
     st.markdown("---")
+    st.write("### Muro de recuerdos💖:")
     try:
         mensajes_db = conn.read(worksheet="dedicatorias", ttl=0)
         for _, fila in mensajes_db.iloc[::-1].iterrows():
