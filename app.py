@@ -9,48 +9,75 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(
     page_title="Lu's Karaoke Party", 
     page_icon="🎤", 
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# --- CSS: ESTILO LIMPIO ---
+# --- CSS: ESTILO RESPONSIVE Y MODO CLARO FORZADO ---
 def local_css():
     st.markdown("""
         <style>
-        .stApp { background-color: #FFFFFF; }
+        /* =========================================
+           1. ESTILOS GLOBALES (Modo Claro Forzado)
+           ========================================= */
+        .stApp { background-color: #FFFFFF; color: #000000; }
+        h1, h2, h3, h4, h5, h6, p, li, span, div { color: #000000 !important; }
         
-        h1 { text-align: center; color: #C0392B !important; font-family: 'Helvetica', sans-serif; font-weight: 800; }
-        h2, h3, h4 { text-align: center; color: #333; }
-
+        /* Inputs y Cajas de texto */
+        .stTextInput>div>div>input, .stTextArea>div>div>textarea { 
+            background-color: #FDF2F2; 
+            color: #000000 !important;
+            font-size: 16px !important; /* Evita zoom automático en iPhone */
+        }
+        
+        /* Botones Generales */
         div.stButton > button {
             width: 100%;
             background-color: #C0392B;
-            color: white;
-            border-radius: 25px;
+            color: white !important;
+            border-radius: 15px;
             border: none;
             font-weight: bold;
-            height: 3em;
-            transition: 0.3s;
+            min-height: 50px; /* Botón más alto para dedos */
+            font-size: 18px !important;
+            margin-top: 10px;
         }
         div.stButton > button:hover {
             background-color: #a93226;
-            transform: scale(1.02);
-            color: white;
+            color: white !important;
         }
-        
-        .stTextInput>div>div>input { background-color: #FDF2F2; }
-        
+
+        /* Contenedores de Métricas (Ranking) */
         div[data-testid="metric-container"] {
             background-color: #F8F9FA;
-            border: 1px solid #eee;
-            padding: 10px;
-            border-radius: 10px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            color: #000000 !important;
+            text-align: center;
+        }
+        div[data-testid="metric-container"] > label { color: #555 !important; }
+
+        /* =========================================
+           2. ESTILOS SOLO PARA MÓVIL (PANTALLAS PEQUEÑAS)
+           ========================================= */
+        @media only screen and (max-width: 600px) {
+            h1 { font-size: 2rem !important; }
+            h2 { font-size: 1.5rem !important; }
+            img { max-width: 100% !important; }
+            .block-container {
+                padding-top: 2rem !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
         }
         </style>
     """, unsafe_allow_html=True)
 
 local_css()
 
-# --- CONEXIÓN MANUAL A GOOGLE SHEETS ---
+# --- CONEXIÓN GOOGLE SHEETS ---
 class ConectorManual:
     def __init__(self):
         try:
@@ -67,7 +94,7 @@ class ConectorManual:
             self.url = self.config["spreadsheet"]
             
         except Exception as e:
-            st.error(f"Error grave conectando: {e}")
+            st.error(f"Error conexión: {e}")
 
     def read(self, worksheet="votos"):
         try:
@@ -84,174 +111,76 @@ class ConectorManual:
             ws.clear()
             ws.update([data.columns.values.tolist()] + data.values.tolist())
         except Exception as e:
-            st.error(f"Error guardando datos: {e}")
+            st.error(f"Error guardando: {e}")
 
-# Iniciamos conexión
 try:
     conn = ConectorManual()
-except Exception as e:
-    st.error(f"No se pudo iniciar el conector: {e}")
+except:
+    pass
 
-# --- MENÚ LATERAL (SIN FOTOMATÓN) ---
-menu = ["🏠 Bienvenida", "🎤 Votar Actuación", "🏆 Ranking", "💌 Dedicatorias"]
-choice = st.sidebar.radio("Menú", menu)
+# --- MENÚ LATERAL ---
+menu = ["🏠 Bienvenida", "🎤 Votar", "🏆 Ranking", "💌 Dedicatorias"]
+choice = st.sidebar.selectbox("¿Qué quieres hacer?", menu)
 
 # ==========================================
 # --- 1. HOME PAGE ---
 # ==========================================
 if choice == "🏠 Bienvenida":
-    st.markdown("<h1 style='font-size: 3em;'>Lu's 30th Birthday 🎂</h1>", unsafe_allow_html=True)
-    st.markdown("### 🎤 Karaoke Edition 🎤")
+    st.markdown("<h1 style='text-align: center;'>Lu's 30th Birthday 🎂</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>🎤 Karaoke Edition 🎤</h3>", unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.image("https://media.giphy.com/media/l4KibWpBGWchSqCRy/giphy.gif", use_container_width=True)
+    st.image("https://media.giphy.com/media/l4KibWpBGWchSqCRy/giphy.gif", use_container_width=True)
 
-    st.write("---")
-
+    st.info("👇 Abre el menú arriba a la izquierda para empezar.")
     st.markdown("""
-    ##### ¡Bienvenidos a la fiesta del año! 
-    Hoy no se juzga la voz, se juzga el **ESPECTÁCULO**.
-    Usa el menú de la izquierda para:
-    
-    * **Votar:** ¡Sé cruel o generoso! Tú sabrás si quieres ganarte algún enemigo más.
-    * **Ranking:** Mira quién va ganando en tiempo real.
-    * **Dedicatorias:** Déjale un mensaje bonito a Lu.
-    
-    **¡Un chupito corre a cuenta de Lu para calentar motores!** 🍹
+    **Instrucciones rápidas:**
+    1. 🎤 Escucha al artista.
+    2. ⭐ Ve a **'Votar'** y puntúalo.
+    3. 🏆 Mira el **'Ranking'** para ver quién gana.
+    4. 💌 Deja un mensaje en **'Dedicatorias'**.
     """)
 
 # ==========================================
-# --- 2. PÁGINA DE VOTACIONES ---
+# --- 2. VOTAR ---
 # ==========================================
-elif choice == "🎤 Votar Actuación":
+elif choice == "🎤 Votar":
     st.title("Puntúa el Show 📊")
     
     with st.form("voting_form", clear_on_submit=True):
-        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Escribe su nombre...")
+        st.write("👤 **¿Quién canta?**")
+        nombre_artista = st.text_input("Nombre", placeholder="Ej: Juan...", label_visibility="collapsed")
         
         st.write("---")
-        c1 = st.slider("⭐ Actitud y Energía", 0, 5, 3)
-        c2 = st.slider("🎭 Interpretación Dramática", 0, 5, 3)
-        c3 = st.slider("🎉 Show y Escena", 0, 5, 3)
-        c4 = st.slider("🔄 Originalidad", 0, 5, 3)
-        c5 = st.slider("👯 Conexión con el Grupo", 0, 5, 3)
+        val_energia = st.slider("⭐ Actitud / Energía", 0, 5, 3)
+        val_voz = st.slider("🎭 Show / Drama", 0, 5, 3)
+        val_publico = st.slider("👯 Conexión Público", 0, 5, 3)
         
-        submitted = st.form_submit_button("Enviar voto 🚀")
+        submitted = st.form_submit_button("¡ENVIAR VOTO! 🚀")
         
         if submitted:
             if nombre_artista:
                 try:
-                    df_actual = conn.read(worksheet="votos")
-                    
-                    puntos_totales = c1 + c2 + c3 + c4 + c5
-                    nueva_fila = pd.DataFrame([{
+                    df = conn.read("votos")
+                    pts = val_energia + val_voz + val_publico
+                    nuevo = pd.DataFrame([{
                         "Artista": nombre_artista.strip().upper(),
-                        "Puntos": puntos_totales,
-                        "Hora": datetime.now().strftime("%H:%M:%S")
+                        "Puntos": pts,
+                        "Hora": datetime.now().strftime("%H:%M")
                     }])
-                    
-                    df_actualizado = pd.concat([df_actual, nueva_fila], ignore_index=True)
-                    conn.update(worksheet="votos", data=df_actualizado)
-                    
-                    # Efectos visuales
+                    conn.update("votos", pd.concat([df, nuevo], ignore_index=True))
                     st.balloons()
-                    st.success(f"¡Voto registrado para {nombre_artista}!")
-
-                except Exception as e:
-                    st.error("Error conectando.")
+                    st.success("✅ Voto guardado")
+                except:
+                    st.error("Error de conexión")
             else:
-                st.warning("⚠️ ¡Falta el nombre del artista!")
+                st.warning("⚠️ Escribe el nombre del cantante")
 
 # ==========================================
 # --- 3. RANKING ---
 # ==========================================
 elif choice == "🏆 Ranking":
-    st.title("Podio de Estrellas 🌟")
-    
+    st.title("Ranking 🏆")
     try:
-        df_votos = conn.read(worksheet="votos")
-        
-        st.markdown("### 📊 En tiempo real")
-        if not df_votos.empty:
-            total_votos = len(df_votos)
-            if 'Artista' in df_votos.columns:
-                lider = df_votos['Artista'].mode()[0] 
-            else:
-                lider = "---"
-            
-            if 'Hora' in df_votos.columns:
-                ultimo_voto = str(df_votos['Hora'].iloc[-1])[:5]
-            else:
-                ultimo_voto = "--:--"
-        else:
-            total_votos = 0; lider = "---"; ultimo_voto = "---"
-
-        col_a, col_b, col_c = st.columns(3)
-        col_a.metric("Total Votos", total_votos, "🔥")
-        col_b.metric("Líder", lider, "🏆")
-        col_c.metric("Última Hora", ultimo_voto, "🕒")
-
-        st.divider()
-
-        if not df_votos.empty and 'Artista' in df_votos.columns:
-            ranking = df_votos.groupby("Artista")["Puntos"].mean().sort_values(ascending=False).head(3)
-            cols = st.columns(3)
-            medallas = ["🥇", "🥈", "🥉"]
-            
-            idx = 0
-            for artista, puntos in ranking.items():
-                if idx < 3:
-                    with cols[idx]:
-                        st.markdown(f"<h1 style='text-align: center; margin-bottom:0;'>{medallas[idx]}</h1>", unsafe_allow_html=True)
-                        st.markdown(f"<h4 style='margin-top:0;'>{artista}</h4>", unsafe_allow_html=True)
-                        st.metric("Puntos Media", f"{puntos:.1f}")
-                    idx += 1
-        else:
-            st.info("Aún no hay cantantes... ¡Sé el primero!")
-            
-    except Exception as e:
-        st.error(f"Error cargando ranking.")
-
-# ==========================================
-# --- 4. DEDICATORIAS ---
-# ==========================================
-elif choice == "💌 Dedicatorias":
-    st.title("Mensajes para Lu 🎂")
-
-    # Función simple para mostrar mensaje de éxito
-    def exito():
-        st.balloons()
-        st.success("¡Gracias por tu mensaje! ❤️")
-        time.sleep(2)
-        st.rerun()
-
-    with st.form("dedicatoria_form", clear_on_submit=True):
-        nombre_invitado = st.text_input("Tu nombre (opcional):")
-        mensaje_texto = st.text_area("Tu mensaje para la cumpleañera:")
-        
-        if st.form_submit_button("Enviar 💌"):
-            if mensaje_texto:
-                try:
-                    df_msjs = conn.read(worksheet="dedicatorias")
-                    nuevo_msj = pd.DataFrame([{
-                        "Nombre": nombre_invitado if nombre_invitado else "Anónimo", 
-                        "Mensaje": mensaje_texto
-                    }])
-                    df_final = pd.concat([df_msjs, nuevo_msj], ignore_index=True)
-                    conn.update(worksheet="dedicatorias", data=df_final)
-                    exito()
-                except Exception as e:
-                    st.error("Error guardando mensaje.")
-            else:
-                st.warning("El mensaje está vacío.")
-
-    st.markdown("---")
-    st.write("### Muro de amor 💛:")
-    try:
-        mensajes_db = conn.read(worksheet="dedicatorias")
-        if not mensajes_db.empty:
-            for _, fila in mensajes_db.iloc[::-1].iterrows():
-                st.info(f"**{fila['Nombre']}**: {fila['Mensaje']}")
-    except:
-        pass
+        df = conn.read("votos")
+        if not df.empty and 'Artista' in df.columns:
+            top = df.groupby("Artista")["Puntos"].sum().
