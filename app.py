@@ -42,7 +42,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A GOOGLE SHEETS (CORREGIDA) ---
+# --- CONEXIÓN A GOOGLE SHEETS (VERSIÓN FINAL BLINDADA) ---
 try:
     # 1. Cargamos los datos de los Secrets en una variable
     secrets_dict = dict(st.secrets["connections"]["gsheets"])
@@ -51,11 +51,16 @@ try:
     if "private_key" in secrets_dict:
         secrets_dict["private_key"] = secrets_dict["private_key"].replace("\\n", "\n")
 
-    # 3. ¡NUEVO! Eliminamos el campo 'type' para que no choque con Streamlit
+    # 3. Limpieza de campos conflictivos para la conexión
     if "type" in secrets_dict:
         del secrets_dict["type"]
+    
+    # ¡NUEVO! Quitamos 'spreadsheet' porque st.connection no lo quiere aquí
+    # (Lo leerá automáticamente de los secrets globales o lo pedirá después)
+    if "spreadsheet" in secrets_dict:
+        del secrets_dict["spreadsheet"]
 
-    # 4. Conectamos pasándole los datos ya limpios
+    # 4. Conectamos pasándole los datos limpios
     conn = st.connection("gsheets", type=GSheetsConnection, **secrets_dict)
 
 except Exception as e:
