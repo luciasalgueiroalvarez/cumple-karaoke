@@ -12,8 +12,8 @@ except ImportError:
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Lu's Karaoke Party", 
-    page_icon="🎤", 
+    page_title="Lu's Karaoke Party",
+    page_icon="🎤",
     layout="centered"
 )
 
