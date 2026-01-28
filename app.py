@@ -2,7 +2,13 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
-import time 
+import time
+
+# --- IMPORTANTE: LIBRERÍA DE IMÁGENES ---
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    st.error("⚠️ Error: No se encuentra la librería 'Pillow'. Verifica requirements.txt")
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
@@ -11,28 +17,15 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- CSS: ESTILO LIMPIO (FONDO BLANCO) ---
+# --- CSS: ESTILO LIMPIO ---
 def local_css():
     st.markdown("""
         <style>
-        /* Fondo blanco puro */
-        .stApp {
-            background-color: #FFFFFF;
-        }
+        .stApp { background-color: #FFFFFF; }
         
-        /* Títulos en Rojo */
-        h1 {
-            text-align: center;
-            color: #C0392B !important;
-            font-family: 'Helvetica', sans-serif;
-            font-weight: 800;
-        }
-        h2, h3, h4 {
-            text-align: center;
-            color: #333;
-        }
+        h1 { text-align: center; color: #C0392B !important; font-family: 'Helvetica', sans-serif; font-weight: 800; }
+        h2, h3, h4 { text-align: center; color: #333; }
 
-        /* Botones Rojos y Redondos */
         div.stButton > button {
             width: 100%;
             background-color: #C0392B;
@@ -49,12 +42,8 @@ def local_css():
             color: white;
         }
         
-        /* Inputs y Cajas de Texto con fondo suave */
-        .stTextInput>div>div>input {
-            background-color: #FDF2F2;
-        }
+        .stTextInput>div>div>input { background-color: #FDF2F2; }
         
-        /* Cajas de métricas (Ranking) */
         div[data-testid="metric-container"] {
             background-color: #F8F9FA;
             border: 1px solid #eee;
@@ -140,12 +129,13 @@ if choice == "🏠 Bienvenida":
     
     **¡Un chupito corre a cuenta de Lu para calentar motores!** 🍹
     """)
+
 # ==========================================
 # --- 2. FOTOMATÓN (CON FILTRO TIPO INSTAGRAM) ---
 # ==========================================
 elif choice == "📸 Fotomatón":
     st.title("📸 El Espejo Mágico")
-    st.markdown("¡Hazte un selfie! Le pondremos un marco de la fiesta automáticamente para que te la guardes de recuerdo.")
+    st.markdown("¡Hazte un selfie! Le pondremos un marco de la fiesta automáticamente.")
     
     # Input de cámara
     imagen_input = st.camera_input("Sonríe... 3, 2, 1 📸")
@@ -158,16 +148,14 @@ elif choice == "📸 Fotomatón":
                 img = Image.open(imagen_input)
                 width, height = img.size
                 
-                # 2. Preparamos el "lienzo" para dibujar encima
-                # Usamos "RGBA" para permitir transparencias
+                # 2. Preparamos el "lienzo"
                 img = img.convert("RGBA")
                 overlay = Image.new("RGBA", img.size, (0,0,0,0))
                 draw = ImageDraw.Draw(overlay)
                 
                 # Configuración del banner
-                banner_height = 70
-                # Color negro (0,0,0) con transparencia (180 sobre 255)
-                banner_color = (0, 0, 0, 180)
+                banner_height = 80
+                banner_color = (0, 0, 0, 180) # Negro transparente
                 
                 # 3. Dibujamos la franja negra abajo
                 draw.rectangle(
@@ -177,46 +165,36 @@ elif choice == "📸 Fotomatón":
                 
                 # 4. Configuramos el texto
                 texto_filtro = "LU'S 30TH BIRTHDAY PARTY 🎤"
-                text_color = (255, 255, 255, 255) # Blanco puro
                 
-                # Intentamos cargar una fuente del sistema más bonita
+                # Intentamos cargar fuentes
                 try:
-                    # Esta fuente suele estar en servidores Linux (como el de Streamlit)
-                    font_size = 30
-                    font = ImageFont.truetype("DejaVuSans-Bold.ttf", font_size)
+                    font = ImageFont.truetype("DejaVuSans-Bold.ttf", 30)
                 except:
-                    # Si falla, usamos la básica por defecto (es más pequeña)
                     font = ImageFont.load_default()
 
-                # Calcular posición para centrar el texto (truco avanzado)
+                # Calcular posición texto
                 try:
                     text_bbox = draw.textbbox((0, 0), texto_filtro, font=font)
                     text_width = text_bbox[2] - text_bbox[0]
                     text_height = text_bbox[3] - text_bbox[1]
                 except:
-                    # Fallback para versiones antiguas de Pillow
-                    text_width = width / 2
-                    text_height = 20
+                    text_width, text_height = width / 2, 20
                     
                 text_x = (width - text_width) / 2
-                text_y = height - (banner_height / 2) - (text_height / 2) - 5 # Un poco de ajuste visual
+                text_y = height - (banner_height / 2) - (text_height / 2) - 5
 
-                # 5. Dibujamos el texto sobre el overlay
-                draw.text((text_x, text_y), texto_filtro, font=font, fill=text_color)
+                # 5. Dibujamos el texto
+                draw.text((text_x, text_y), texto_filtro, font=font, fill="white")
                 
-                # 6. Fusionamos la imagen original con el overlay del banner y texto
+                # 6. Fusionamos
                 img_final = Image.alpha_composite(img, overlay)
                 
-                # --- FIN DEL PROCESO ---
-                
                 st.success("¡Fotaza! ✨")
-                # Mostramos la imagen editada
                 st.image(img_final, use_container_width=True)
-                st.info("💡 **Tip:** Mantén pulsada la foto (o click derecho) para guardarla y subirla a Stories.")
+                st.info("💡 **Tip:** Mantén pulsada la foto para guardarla.")
                 
             except Exception as e:
-                st.error(f"Ups, hubo un error aplicando el filtro: {e}")
-                # Si falla el filtro, mostramos la original al menos
+                st.error(f"Error aplicando el filtro: {e}")
                 st.image(imagen_input)    
 
 # ==========================================
@@ -226,10 +204,9 @@ elif choice == "🎤 Votar Actuación":
     st.title("Puntúa el Show 📊")
     
     with st.form("voting_form", clear_on_submit=True):
-        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Escribe su nombre... correctamente, no te inventes un mote 😐")
+        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Escribe su nombre...")
         
         st.write("---")
-        # Sliders
         c1 = st.slider("⭐ Actitud y Energía", 0, 5, 3)
         c2 = st.slider("🎭 Interpretación Dramática", 0, 5, 3)
         c3 = st.slider("🎉 Show y Escena", 0, 5, 3)
@@ -241,7 +218,6 @@ elif choice == "🎤 Votar Actuación":
         if submitted:
             if nombre_artista:
                 try:
-                    # AQUÍ ESTABA EL ERROR ANTES, AHORA ESTÁ CORREGIDO:
                     df_actual = conn.read(worksheet="votos", ttl=0)
                     
                     puntos_totales = c1 + c2 + c3 + c4 + c5
@@ -254,15 +230,8 @@ elif choice == "🎤 Votar Actuación":
                     df_actualizado = pd.concat([df_actual, nueva_fila], ignore_index=True)
                     conn.update(worksheet="votos", data=df_actualizado)
                     
-                    # Efectos visuales
-                    barra_carga = st.progress(0, text="Guardando voto...")
-                    for i in range(100):
-                        time.sleep(0.005) # Rápido
-                        barra_carga.progress(i + 1)
-                    
-                    barra_carga.empty()
-                    st.toast(f'¡Voto registrado para {nombre_artista}!', icon='✅')
                     st.balloons()
+                    st.success(f"¡Voto registrado para {nombre_artista}!")
 
                 except Exception as e:
                     st.error("Error conectando.")
@@ -274,12 +243,11 @@ elif choice == "🎤 Votar Actuación":
 # --- 4. RANKING ---
 # ==========================================
 elif choice == "🏆 Ranking":
-    st.title("Podio de Estrellas 🌟 (o Estrellados)")
+    st.title("Podio de Estrellas 🌟")
     
     try:
         df_votos = conn.read(worksheet="votos", ttl=0)
         
-        # Estadísticas Rápidas
         st.markdown("### 📊 En tiempo real")
         if not df_votos.empty:
             total_votos = len(df_votos)
@@ -295,7 +263,6 @@ elif choice == "🏆 Ranking":
 
         st.divider()
 
-        # Tabla de Ganadores con Medallas
         if not df_votos.empty:
             ranking = df_votos.groupby("Artista")["Puntos"].mean().sort_values(ascending=False).head(3)
             cols = st.columns(3)
@@ -310,7 +277,7 @@ elif choice == "🏆 Ranking":
             st.info("Aún no hay cantantes... ¡Sé el primero!")
             
     except Exception as e:
-        st.error("Error cargando ranking.")
+        st.error(f"Error cargando ranking: {e}")
 
 # ==========================================
 # --- 5. DEDICATORIAS ---
@@ -322,9 +289,7 @@ elif choice == "💌 Dedicatorias":
     def popup_agradecimiento():
         st.markdown("""
         **Gracias de corazón por venir a celebrar los 30 conmigo 🧸💖**
-
-        Está siendo una noche increíble. Gracias por darlo todo y hacer la fiesta tan especial. 
-        
+        Está siendo una noche increíble. Gracias por darlo todo. 
         Sin ti no es lo mismo 💖🎤
         """)
         if st.button("Cerrar"):
