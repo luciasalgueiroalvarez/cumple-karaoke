@@ -42,31 +42,39 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONEXIÓN MANUAL BLINDADA google sheets (PARA EVITAR ERRORES DE LIBRERÍA) ---
+# --- CONEXIÓN MANUAL A GOOGLE SHEETS (COMPATIBLE CON TUS SECRETS) ---
 import gspread
 from google.oauth2.service_account import Credentials
 
 class ConectorManual:
     def __init__(self):
         try:
-            # 1. Leemos los secrets y arreglamos la clave (el truco final)
+            # 1. Cargamos todos los datos del archivo secrets
+            # Streamlit ya los lee como un diccionario gracias al formato TOML que pusiste
             self.config = dict(st.secrets["connections"]["gsheets"])
+
+            # 2. Aseguramos que la clave privada tenga los saltos de línea correctos
+            # (A veces al copiar se quedan como texto "\n" en vez de enter real)
             if "private_key" in self.config:
                 self.config["private_key"] = self.config["private_key"].replace("\\n", "\n")
-            
-            # 2. Conectamos con Google directamente
+
+            # 3. Autenticación directa con Google
             scopes = [
                 "https://www.googleapis.com/auth/spreadsheets",
                 "https://www.googleapis.com/auth/drive"
             ]
+            
+            # Creamos las credenciales usando el diccionario limpio
             creds = Credentials.from_service_account_info(self.config, scopes=scopes)
             self.client = gspread.authorize(creds)
+            
+            # 4. Obtenemos la URL de la hoja
             self.url = self.config["spreadsheet"]
             
         except Exception as e:
             st.error(f"Error grave conectando: {e}")
 
-    # Simulamos la función read() original
+    # Función para LEER datos
     def read(self, worksheet="votos", ttl=0):
         try:
             sh = self.client.open_by_url(self.url)
@@ -74,20 +82,20 @@ class ConectorManual:
             return pd.DataFrame(ws.get_all_records())
         except Exception as e:
             st.error(f"Error leyendo la hoja '{worksheet}': {e}")
-            return pd.DataFrame() # Devuelve vacío si falla
+            return pd.DataFrame()
 
-    # Simulamos la función update() original
+    # Función para GUARDAR datos
     def update(self, worksheet, data):
         try:
             sh = self.client.open_by_url(self.url)
             ws = sh.worksheet(worksheet)
             ws.clear()
-            # Subimos los datos (gspread necesita listas)
+            # gspread necesita que los datos sean una lista de listas
             ws.update([data.columns.values.tolist()] + data.values.tolist())
         except Exception as e:
             st.error(f"Error guardando datos: {e}")
 
-# Creamos la conexión falsa pero funcional
+# Iniciamos la conexión
 try:
     conn = ConectorManual()
 except Exception as e:
