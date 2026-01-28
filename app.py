@@ -120,7 +120,7 @@ choice = st.sidebar.radio("Menú", menu)
 # ==========================================
 if choice == "🏠 Bienvenida":
     st.markdown("<h1 style='font-size: 3em;'>Lu's 30th Birthday 🎂</h1>", unsafe_allow_html=True)
-    st.markdown("### 🎤 The Karaoke Edition 🎤")
+    st.markdown("### 🎤 Karaoke Edition 🎤")
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -130,14 +130,14 @@ if choice == "🏠 Bienvenida":
 
     st.markdown("""
     ##### ¡Bienvenidos a la fiesta del año! 
-    Hoy no se juzga la afinación, se juzga el **ESPECTÁCULO**.
-    Usa el menú de la izquierda (o arriba en el móvil) para:
+    Hoy no se juzga la voz, se juzga el **ESPECTÁCULO**.
+    Usa el menú de la izquierda para:
     
-    * **Votar:** ¡Sé cruel o generoso!
+    * **Votar:** ¡Sé cruel o generoso! Tú sabrás si quieres ganarte algún enemigo más.
     * **Ranking:** Mira quién va ganando en tiempo real.
     * **Dedicatorias:** Déjale un mensaje bonito a Lu.
     
-    **¡Un chupito corre a cuenta de Lu para calentar motores!** 🥃
+    **¡Un chupito corre a cuenta de Lu para calentar motores!** 🍹
     """)
 
 # ==========================================
@@ -147,7 +147,7 @@ elif choice == "🎤 Votar Actuación":
     st.title("Puntúa el Show 📊")
     
     with st.form("voting_form", clear_on_submit=True):
-        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Escribe su nombre...")
+        nombre_artista = st.text_input("👤 ¿Quién está en el escenario?", placeholder="Escribe su nombre... correctamente, no te inventes un mote 😐")
         
         st.write("---")
         # Sliders
@@ -182,7 +182,7 @@ elif choice == "🎤 Votar Actuación":
                         barra_carga.progress(i + 1)
                     
                     barra_carga.empty()
-                    st.toast(f'¡Voto registrado para {nombre_artista}! 🗳️', icon='✅')
+                    st.toast(f'¡Voto registrado para {nombre_artista}!', icon='✅')
                     st.balloons()
 
                 except Exception as e:
@@ -195,7 +195,7 @@ elif choice == "🎤 Votar Actuación":
 # --- 3. RANKING ---
 # ==========================================
 elif choice == "🏆 Ranking":
-    st.title("Podio de Estrellas 🌟")
+    st.title("Podio de Estrellas 🌟 (o Estrellados)")
     
     try:
         df_votos = conn.read(worksheet="votos", ttl=0)
@@ -266,7 +266,7 @@ elif choice == "💌 Dedicatorias":
                 st.warning("El mensaje está vacío.")
 
     st.markdown("---")
-    st.write("### Muro de Love 💛:")
+    st.write("### Muro de amor 💛:")
     try:
         mensajes_db = conn.read(worksheet="dedicatorias", ttl=0)
         if not mensajes_db.empty:
