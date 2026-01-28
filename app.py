@@ -241,7 +241,13 @@ elif choice == "💌 Dedicatorias":
 
     @st.dialog("¡Gracias! ❤️")
     def popup_agradecimiento():
-        st.markdown("Gracias por venir y por tus palabras. ¡A seguir con la fiesta!")
+        st.markdown("""
+        **Gracias de corazoón por venir a celebrar los 30 conmigo 🧸💖**
+
+        Está siendo una noche increíble. Gracias por darlo todo y hacer la fiesta tan especial. 
+        
+        Sin ti no es lo mismo 💖🎤*
+        """)
         if st.button("Cerrar"):
             st.rerun()
 
