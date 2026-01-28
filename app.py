@@ -42,9 +42,18 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A GOOGLE SHEETS ---
+# --- CONEXIÓN A GOOGLE SHEETS (CON CORRECCIÓN AUTOMÁTICA) ---
 try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
+    # 1. Cargamos los datos de los Secrets en una variable
+    secrets_dict = dict(st.secrets["connections"]["gsheets"])
+
+    # 2. Corregimos manualmente el problema de los saltos de línea "\n"
+    if "private_key" in secrets_dict:
+        secrets_dict["private_key"] = secrets_dict["private_key"].replace("\\n", "\n")
+
+    # 3. Conectamos pasándole los datos ya arreglados
+    conn = st.connection("gsheets", type=GSheetsConnection, **secrets_dict)
+
 except Exception as e:
     st.error(f"Error de configuración en Secrets: {e}")
 
