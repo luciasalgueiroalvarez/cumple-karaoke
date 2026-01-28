@@ -42,29 +42,56 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A GOOGLE SHEETS (VERSIÓN FINAL BLINDADA) ---
+# --- CONEXIÓN MANUAL BLINDADA google sheets (PARA EVITAR ERRORES DE LIBRERÍA) ---
+import gspread
+from google.oauth2.service_account import Credentials
+
+class ConectorManual:
+    def __init__(self):
+        try:
+            # 1. Leemos los secrets y arreglamos la clave (el truco final)
+            self.config = dict(st.secrets["connections"]["gsheets"])
+            if "private_key" in self.config:
+                self.config["private_key"] = self.config["private_key"].replace("\\n", "\n")
+            
+            # 2. Conectamos con Google directamente
+            scopes = [
+                "https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive"
+            ]
+            creds = Credentials.from_service_account_info(self.config, scopes=scopes)
+            self.client = gspread.authorize(creds)
+            self.url = self.config["spreadsheet"]
+            
+        except Exception as e:
+            st.error(f"Error grave conectando: {e}")
+
+    # Simulamos la función read() original
+    def read(self, worksheet="votos", ttl=0):
+        try:
+            sh = self.client.open_by_url(self.url)
+            ws = sh.worksheet(worksheet)
+            return pd.DataFrame(ws.get_all_records())
+        except Exception as e:
+            st.error(f"Error leyendo la hoja '{worksheet}': {e}")
+            return pd.DataFrame() # Devuelve vacío si falla
+
+    # Simulamos la función update() original
+    def update(self, worksheet, data):
+        try:
+            sh = self.client.open_by_url(self.url)
+            ws = sh.worksheet(worksheet)
+            ws.clear()
+            # Subimos los datos (gspread necesita listas)
+            ws.update([data.columns.values.tolist()] + data.values.tolist())
+        except Exception as e:
+            st.error(f"Error guardando datos: {e}")
+
+# Creamos la conexión falsa pero funcional
 try:
-    # 1. Cargamos los datos de los Secrets en una variable
-    secrets_dict = dict(st.secrets["connections"]["gsheets"])
-
-    # 2. Corregimos manualmente el problema de los saltos de línea "\n"
-    if "private_key" in secrets_dict:
-        secrets_dict["private_key"] = secrets_dict["private_key"].replace("\\n", "\n")
-
-    # 3. Limpieza de campos conflictivos para la conexión
-    if "type" in secrets_dict:
-        del secrets_dict["type"]
-    
-    # ¡NUEVO! Quitamos 'spreadsheet' porque st.connection no lo quiere aquí
-    # (Lo leerá automáticamente de los secrets globales o lo pedirá después)
-    if "spreadsheet" in secrets_dict:
-        del secrets_dict["spreadsheet"]
-
-    # 4. Conectamos pasándole los datos limpios
-    conn = st.connection("gsheets", type=GSheetsConnection, **secrets_dict)
-
+    conn = ConectorManual()
 except Exception as e:
-    st.error(f"Error de configuración en Secrets: {e}")
+    st.error(f"No se pudo iniciar el conector: {e}")
 
 # --- NAVEGACIÓN ---
 menu = ["🏠 Bienvenida", "🎤 Votar Actuación", "🏆 Ranking", "💌 Dedicatorias"]
