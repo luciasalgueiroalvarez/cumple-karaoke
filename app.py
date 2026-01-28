@@ -13,24 +13,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS: ESTILO RESPONSIVE Y MODO CLARO FORZADO ---
+# --- CSS: ESTILO MODO CLARO Y MÓVIL ---
 def local_css():
     st.markdown("""
         <style>
-        /* =========================================
-           1. ESTILOS GLOBALES (Modo Claro Forzado)
-           ========================================= */
+        /* Forzar modo claro (letras negras sobre fondo blanco) */
         .stApp { background-color: #FFFFFF; color: #000000; }
         h1, h2, h3, h4, h5, h6, p, li, span, div { color: #000000 !important; }
         
-        /* Inputs y Cajas de texto */
+        /* Inputs ajustados para iPhone (evita zoom) */
         .stTextInput>div>div>input, .stTextArea>div>div>textarea { 
             background-color: #FDF2F2; 
             color: #000000 !important;
-            font-size: 16px !important; /* Evita zoom automático en iPhone */
+            font-size: 16px !important; 
         }
         
-        /* Botones Generales */
+        /* Botones grandes y fáciles de pulsar */
         div.stButton > button {
             width: 100%;
             background-color: #C0392B;
@@ -38,39 +36,25 @@ def local_css():
             border-radius: 15px;
             border: none;
             font-weight: bold;
-            min-height: 50px; /* Botón más alto para dedos */
+            min-height: 50px;
             font-size: 18px !important;
             margin-top: 10px;
         }
-        div.stButton > button:hover {
-            background-color: #a93226;
-            color: white !important;
-        }
-
-        /* Contenedores de Métricas (Ranking) */
+        
+        /* Cajas del ranking */
         div[data-testid="metric-container"] {
             background-color: #F8F9FA;
             border: 1px solid #ddd;
             padding: 15px;
             border-radius: 12px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
             color: #000000 !important;
             text-align: center;
         }
-        div[data-testid="metric-container"] > label { color: #555 !important; }
-
-        /* =========================================
-           2. ESTILOS SOLO PARA MÓVIL (PANTALLAS PEQUEÑAS)
-           ========================================= */
+        
+        /* Ajustes para pantallas pequeñas */
         @media only screen and (max-width: 600px) {
             h1 { font-size: 2rem !important; }
-            h2 { font-size: 1.5rem !important; }
             img { max-width: 100% !important; }
-            .block-container {
-                padding-top: 2rem !important;
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -118,46 +102,39 @@ try:
 except:
     pass
 
-# --- MENÚ LATERAL ---
+# --- MENÚ ---
 menu = ["🏠 Bienvenida", "🎤 Votar", "🏆 Ranking", "💌 Dedicatorias"]
 choice = st.sidebar.selectbox("¿Qué quieres hacer?", menu)
 
 # ==========================================
-# --- 1. HOME PAGE ---
+# 1. BIENVENIDA
 # ==========================================
 if choice == "🏠 Bienvenida":
     st.markdown("<h1 style='text-align: center;'>Lu's 30th Birthday 🎂</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center;'>🎤 Karaoke Edition 🎤</h3>", unsafe_allow_html=True)
-    
     st.image("https://media.giphy.com/media/l4KibWpBGWchSqCRy/giphy.gif", use_container_width=True)
-
-    st.info("👇 Abre el menú arriba a la izquierda para empezar.")
+    st.info("👇 Usa el menú de arriba a la izquierda.")
     st.markdown("""
-    **Instrucciones rápidas:**
-    1. 🎤 Escucha al artista.
-    2. ⭐ Ve a **'Votar'** y puntúalo.
-    3. 🏆 Mira el **'Ranking'** para ver quién gana.
-    4. 💌 Deja un mensaje en **'Dedicatorias'**.
+    **Instrucciones:**
+    1. ⭐ **Vota** a los cantantes.
+    2. 🏆 Mira el **Ranking**.
+    3. 💌 Deja una **Dedicatoria**.
     """)
 
 # ==========================================
-# --- 2. VOTAR ---
+# 2. VOTAR
 # ==========================================
 elif choice == "🎤 Votar":
     st.title("Puntúa el Show 📊")
-    
     with st.form("voting_form", clear_on_submit=True):
         st.write("👤 **¿Quién canta?**")
         nombre_artista = st.text_input("Nombre", placeholder="Ej: Juan...", label_visibility="collapsed")
-        
         st.write("---")
-        val_energia = st.slider("⭐ Actitud / Energía", 0, 5, 3)
-        val_voz = st.slider("🎭 Show / Drama", 0, 5, 3)
-        val_publico = st.slider("👯 Conexión Público", 0, 5, 3)
+        val_energia = st.slider("⭐ Energía", 0, 5, 3)
+        val_voz = st.slider("🎭 Show", 0, 5, 3)
+        val_publico = st.slider("👯 Público", 0, 5, 3)
         
-        submitted = st.form_submit_button("¡ENVIAR VOTO! 🚀")
-        
-        if submitted:
+        if st.form_submit_button("¡ENVIAR VOTO! 🚀"):
             if nombre_artista:
                 try:
                     df = conn.read("votos")
@@ -173,14 +150,32 @@ elif choice == "🎤 Votar":
                 except:
                     st.error("Error de conexión")
             else:
-                st.warning("⚠️ Escribe el nombre del cantante")
+                st.warning("⚠️ Escribe el nombre")
 
 # ==========================================
-# --- 3. RANKING ---
+# 3. RANKING (Corregido)
 # ==========================================
 elif choice == "🏆 Ranking":
     st.title("Ranking 🏆")
     try:
         df = conn.read("votos")
         if not df.empty and 'Artista' in df.columns:
-            top = df.groupby("Artista")["Puntos"].sum().
+            
+            # --- AQUÍ ESTABA EL ERROR: LO HE DIVIDIDO EN DOS PASOS ---
+            # Paso 1: Sumar puntos por artista
+            agrupado = df.groupby("Artista")["Puntos"].sum()
+            # Paso 2: Ordenar y coger los 3 mejores
+            top = agrupado.sort_values(ascending=False).head(3)
+            
+            st.write("### 🥇 Podio Actual")
+            medallas = ["🥇 PRIMERO", "🥈 SEGUNDO", "🥉 TERCERO"]
+            colores = ["#FFD700", "#C0C0C0", "#CD7F32"]
+            
+            i = 0
+            for artista, puntos in top.items():
+                if i < 3:
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="background-color: {colores[i]}20; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 2px solid {colores[i]};">
+                            <h3 style="margin:0; text-align:center;">{medallas[i]}</h3>
+                            <h
