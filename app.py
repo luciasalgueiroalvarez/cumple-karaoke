@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
+import time # Importamos time aquí arriba para evitar errores
 
 # --- MAQUILLAJE VISUAL (CSS) ---
 def local_css():
@@ -99,11 +100,9 @@ class ConectorManual:
     def __init__(self):
         try:
             # 1. Cargamos todos los datos del archivo secrets
-            # Streamlit ya los lee como un diccionario gracias al formato TOML que pusiste
             self.config = dict(st.secrets["connections"]["gsheets"])
 
             # 2. Aseguramos que la clave privada tenga los saltos de línea correctos
-            # (A veces al copiar se quedan como texto "\n" en vez de enter real)
             if "private_key" in self.config:
                 self.config["private_key"] = self.config["private_key"].replace("\\n", "\n")
 
@@ -130,7 +129,7 @@ class ConectorManual:
             ws = sh.worksheet(worksheet)
             return pd.DataFrame(ws.get_all_records())
         except Exception as e:
-            st.error(f"Error leyendo la hoja '{worksheet}': {e}")
+            # st.error(f"Error leyendo la hoja '{worksheet}': {e}") # Comentado para no ensuciar si está vacía
             return pd.DataFrame()
 
     # Función para GUARDAR datos
@@ -205,23 +204,19 @@ elif choice == "🎤 Votar Actuación":
                     df_actualizado = pd.concat([df_actual, nueva_fila], ignore_index=True)
                     conn.update(worksheet="votos", data=df_actualizado)
                     
-                    # --- PEGAR ESTO EN LUGAR DE LA LÍNEA 209 ---
+                    # --- EFECTOS VISUALES ---
                     
-                    # 1. Importamos time para hacer el efecto de espera
-                    import time 
-                    
-                    # 2. Creamos una barra de carga para dar emoción
+                    # 1. Barra de carga
                     barra_carga = st.progress(0, text="Guardando voto en la urna...")
                     for i in range(100):
                         time.sleep(0.01) # Pequeña pausa
                         barra_carga.progress(i + 1)
                     
-                    # 3. Borramos la barra y lanzamos la notificación moderna
+                    # 2. Notificación y Globos
                     barra_carga.empty()
                     st.toast(f'¡Voto registrado para {nombre_artista}! 🗳️', icon='✅')
-                    
-                    # 4. Y por último... ¡fiesta!
                     st.balloons()
+
                 except Exception as e:
                     st.error("Error al conectar con la base de datos.")
                     st.info("Asegúrate de que la pestaña del Excel se llame exactamente 'votos'")
@@ -235,6 +230,30 @@ elif choice == "🏆 Ranking":
     
     try:
         df_votos = conn.read(worksheet="votos", ttl=0)
+        
+        # --- SECCIÓN DE ESTADÍSTICAS (INTEGRADA AQUÍ) ---
+        st.markdown("### 📊 Estadísticas en tiempo real")
+        
+        # Calculamos algunos datos extra solo si hay datos
+        if not df_votos.empty:
+            total_votos = len(df_votos)
+            # Usamos "Artista" en lugar de "votado_a" porque así lo guardamos en el Excel
+            lider = df_votos['Artista'].mode()[0] 
+            ultimo_voto = df_votos['Hora'].iloc[-1]
+        else:
+            total_votos = 0
+            lider = "Nadie aún"
+            ultimo_voto = "---"
+
+        # Mostramos 3 tarjetas bonitas en fila
+        col_a, col_b, col_c = st.columns(3)
+        col_a.metric("Total Votos", total_votos, "🔥 on fire")
+        col_b.metric("Líder Actual", lider, "🏆 ganando")
+        col_c.metric("Último Voto", str(ultimo_voto), "🕒 hora")
+
+        st.divider() # Una línea separadora elegante
+        # -----------------------------------------------
+
         if not df_votos.empty:
             # Calculamos la media por artista
             ranking = df_votos.groupby("Artista")["Puntos"].mean().sort_values(ascending=False).head(3)
@@ -252,22 +271,6 @@ elif choice == "🏆 Ranking":
     except Exception as e:
         st.error("No se pudo cargar el ranking.")
         st.write(f"Error: {e}")
-
-# --- DENTRO DE LA PESTAÑA DE RESULTADOS ---
-st.markdown("### 📊 Estadísticas en tiempo real")
-
-# Calculamos algunos datos extra
-total_votos = len(df)
-lider = df['votado_a'].mode()[0] if not df.empty else "Nadie aún"
-ultimo_voto = df['timestamp'].iloc[-1] if not df.empty else "---"
-
-# Mostramos 3 tarjetas bonitas en fila
-col_a, col_b, col_c = st.columns(3)
-col_a.metric("Total Votos", total_votos, "🔥 on fire")
-col_b.metric("Líder Actual", lider, "🏆 ganando")
-col_c.metric("Último Voto", ultimo_voto.split(" ")[1][:5], "🕒 hora") # Solo la hora
-
-st.divider() # Una línea separadora elegante
 
 # --- 4. DEDICATORIAS ---
 elif choice == "💌 Dedicatorias":
@@ -312,7 +315,8 @@ elif choice == "💌 Dedicatorias":
     st.write("### Muro de recuerdos:")
     try:
         mensajes_db = conn.read(worksheet="dedicatorias", ttl=0)
-        for _, fila in mensajes_db.iloc[::-1].iterrows():
-            st.info(f"**{fila['Nombre']}**: {fila['Mensaje']}")
+        if not mensajes_db.empty:
+            for _, fila in mensajes_db.iloc[::-1].iterrows():
+                st.info(f"**{fila['Nombre']}**: {fila['Mensaje']}")
     except:
         pass
