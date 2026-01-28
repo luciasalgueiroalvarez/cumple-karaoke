@@ -112,7 +112,7 @@ except Exception as e:
     st.error(f"No se pudo iniciar el conector: {e}")
 
 # --- MENÚ LATERAL ---
-menu = ["🏠 Bienvenida", "🎤 Votar Actuación", "🏆 Ranking", "💌 Dedicatorias"]
+menu = ["🏠 Bienvenida", "📸 Fotomatón", "🎤 Votar Actuación", "🏆 Ranking", "💌 Dedicatorias"]
 choice = st.sidebar.radio("Menú", menu)
 
 # ==========================================
@@ -133,15 +133,94 @@ if choice == "🏠 Bienvenida":
     Hoy no se juzga la voz, se juzga el **ESPECTÁCULO**.
     Usa el menú de la izquierda para:
     
+    * **Fotomatón:** Hazte un selfie y súbelo a Instagram 😘
     * **Votar:** ¡Sé cruel o generoso! Tú sabrás si quieres ganarte algún enemigo más.
     * **Ranking:** Mira quién va ganando en tiempo real.
     * **Dedicatorias:** Déjale un mensaje bonito a Lu.
     
     **¡Un chupito corre a cuenta de Lu para calentar motores!** 🍹
     """)
+# ==========================================
+# --- 2. FOTOMATÓN (CON FILTRO TIPO INSTAGRAM) ---
+# ==========================================
+elif choice == "📸 Fotomatón":
+    st.title("📸 El Espejo Mágico")
+    st.markdown("¡Hazte un selfie! Le pondremos un marco de la fiesta automáticamente para que te la guardes de recuerdo.")
+    
+    # Input de cámara
+    imagen_input = st.camera_input("Sonríe... 3, 2, 1 📸")
+    
+    if imagen_input:
+        # --- PROCESO DE EDICIÓN DE IMAGEN (FILTRO) ---
+        with st.spinner("Aplicando filtro de fiesta... ✨"):
+            try:
+                # 1. Abrimos la imagen con Pillow
+                img = Image.open(imagen_input)
+                width, height = img.size
+                
+                # 2. Preparamos el "lienzo" para dibujar encima
+                # Usamos "RGBA" para permitir transparencias
+                img = img.convert("RGBA")
+                overlay = Image.new("RGBA", img.size, (0,0,0,0))
+                draw = ImageDraw.Draw(overlay)
+                
+                # Configuración del banner
+                banner_height = 70
+                # Color negro (0,0,0) con transparencia (180 sobre 255)
+                banner_color = (0, 0, 0, 180)
+                
+                # 3. Dibujamos la franja negra abajo
+                draw.rectangle(
+                    [(0, height - banner_height), (width, height)],
+                    fill=banner_color
+                )
+                
+                # 4. Configuramos el texto
+                texto_filtro = "LU'S 30TH BIRTHDAY PARTY 🎤"
+                text_color = (255, 255, 255, 255) # Blanco puro
+                
+                # Intentamos cargar una fuente del sistema más bonita
+                try:
+                    # Esta fuente suele estar en servidores Linux (como el de Streamlit)
+                    font_size = 30
+                    font = ImageFont.truetype("DejaVuSans-Bold.ttf", font_size)
+                except:
+                    # Si falla, usamos la básica por defecto (es más pequeña)
+                    font = ImageFont.load_default()
+
+                # Calcular posición para centrar el texto (truco avanzado)
+                try:
+                    text_bbox = draw.textbbox((0, 0), texto_filtro, font=font)
+                    text_width = text_bbox[2] - text_bbox[0]
+                    text_height = text_bbox[3] - text_bbox[1]
+                except:
+                    # Fallback para versiones antiguas de Pillow
+                    text_width = width / 2
+                    text_height = 20
+                    
+                text_x = (width - text_width) / 2
+                text_y = height - (banner_height / 2) - (text_height / 2) - 5 # Un poco de ajuste visual
+
+                # 5. Dibujamos el texto sobre el overlay
+                draw.text((text_x, text_y), texto_filtro, font=font, fill=text_color)
+                
+                # 6. Fusionamos la imagen original con el overlay del banner y texto
+                img_final = Image.alpha_composite(img, overlay)
+                
+                # --- FIN DEL PROCESO ---
+                
+                st.success("¡Fotaza! ✨")
+                # Mostramos la imagen editada
+                st.image(img_final, use_container_width=True)
+                st.info("💡 **Tip:** Mantén pulsada la foto (o click derecho) para guardarla y subirla a Stories.")
+                
+            except Exception as e:
+                st.error(f"Ups, hubo un error aplicando el filtro: {e}")
+                # Si falla el filtro, mostramos la original al menos
+                st.image(imagen_input)    
 
 # ==========================================
-# --- 2. PÁGINA DE VOTACIONES ---
+# --- 3. PÁGINA DE VOTACIONES ---
 # ==========================================
 elif choice == "🎤 Votar Actuación":
     st.title("Puntúa el Show 📊")
@@ -192,7 +271,7 @@ elif choice == "🎤 Votar Actuación":
                 st.warning("⚠️ ¡Falta el nombre del artista!")
 
 # ==========================================
-# --- 3. RANKING ---
+# --- 4. RANKING ---
 # ==========================================
 elif choice == "🏆 Ranking":
     st.title("Podio de Estrellas 🌟 (o Estrellados)")
@@ -234,7 +313,7 @@ elif choice == "🏆 Ranking":
         st.error("Error cargando ranking.")
 
 # ==========================================
-# --- 4. DEDICATORIAS ---
+# --- 5. DEDICATORIAS ---
 # ==========================================
 elif choice == "💌 Dedicatorias":
     st.title("Mensajes para Lu 🎂")
