@@ -281,20 +281,35 @@ elif choice == "🎲 Ruleta":
     
     # Listas actualizadas con más 2000s y desafíos interactivos
     canciones = [
-        # CLÁSICOS
+        # --- CLÁSICOS ESPAÑOLES & FIESTA ---
         "Mi Gran Noche - Raphael", "Como una ola - Rocío Jurado", 
-        "Wannabe - Spice Girls", "Despacito - Luis Fonsi", 
-        "Gasolina - Daddy Yankee", "Sobreviviré - Mónica Naranjo",
-        "It's Raining Men - The Weather Girls", "Bailando - Enrique Iglesias",
-        "Libre - Nino Bravo", "A quién le importa - Alaska",
-        "Corazón Partío - Alejandro Sanz", "La Macarena - Los del Río",
-        # 2000s y TEMAZOS DE FIESTA
+        "Sobreviviré - Mónica Naranjo", "Libre - Nino Bravo", 
+        "A quién le importa - Alaska", "La Macarena - Los del Río",
+        "Bailando - Enrique Iglesias", "Corazón Partío - Alejandro Sanz",
+        
+        # --- 2000s ESPAÑA & VERBENA ---
         "Ave María - David Bisbal", "Caminando por la vida - Melendi",
         "Zapatillas - El Canto del Loco", "Por la raja de tu falda - Estopa",
-        "Aserejé - Las Ketchup", "Obsesión - Aventura",
-        "Papi Chulo - Lorna", "Dile - Don Omar",
-        "Marta, Sebas, Guille y los demás - Amaral", "Torero - Chayanne",
-        "Yo quiero bailar - Sonia y Selena", "Dragostea Din Tei - O-Zone"
+        "Marta, Sebas, Guille y los demás - Amaral", "Princesas - Pereza",
+        "Aserejé - Las Ketchup", "Torero - Chayanne",
+        "Yo quiero bailar - Sonia y Selena", "Colgando en tus manos - Carlos Baute",
+        "Estoy Aquí - Shakira", "Clavado en un bar - Maná", "Lloraré las penas - David Bisbal",
+        
+        # --- DIVAS & POP INTERNACIONAL (Nostalgia 90s/00s) ---
+        "Love Story - Taylor Swift", "The Best of Both Worlds - Hannah Montana", 
+        "Party in the U.S.A. - Miley Cyrus", "Wannabe - Spice Girls", 
+        "Baby One More Time - Britney Spears", "I Want It That Way - Backstreet Boys", 
+        "It's Raining Men - The Weather Girls",
+        
+        # --- DISNEY & HIGH SCHOOL MUSICAL ---
+        "Un Mundo Ideal - Aladdin", "Bajo del Mar - La Sirenita",
+        "Breaking Free - High School Musical", "Suéltalo (Let It Go) - Frozen",
+        "El Ciclo de la Vida - El Rey León",
+        
+        # --- HIMNOS INTERNACIONALES ---
+        "Livin' on a Prayer - Bon Jovi", "Bohemian Rhapsody - Queen",
+        "Mamma Mia - ABBA", "You're the One That I Want - Grease",
+        "I Will Survive - Gloria Gaynor"
     ]
     
     desafios = [
@@ -305,9 +320,9 @@ elif choice == "🎲 Ruleta":
         "🥴 Como si estuvieras borracho/a", "🐭 Con voz de pito",
         # DESAFÍOS NUEVOS
         "🅰️ Cantar todo SOLO con la vocal 'A'", "🅾️ Cantar todo SOLO con la vocal 'O'",
-        "🤝 Convence a alguien que NO quiera cantar para que suba contigo",
+        "🤝 Convence a alguien que no conozcas para que suba contigo a cantar",
         "🏋️ Cantar haciendo sentadillas", "🧘 Cantar tumbado en el suelo",
-        "🤐 Cantar sin mover los labios (Ventrílocuo)", "👺 Estilo Ópera / Pavarotti"
+        "🤐 Cantar sin mover los labios", "👺 Estilo Ópera / Pavarotti"
     ]
 
     if st.button("🎰 TIRAAAA DEEEE LA RULETAAAAA 🎰"):
