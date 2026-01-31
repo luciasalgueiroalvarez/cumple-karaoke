@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import time
+import random
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -10,45 +11,64 @@ st.set_page_config(
     page_title="Lu's Karaoke Party", 
     page_icon="🎤", 
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# --- CSS: MODO OSCURO ARREGLADO Y MÓVIL ---
+# --- CSS: MODO OSCURO ARREGLADO (VERSIÓN CORREGIDA) ---
 def local_css():
     st.markdown("""
         <style>
-        /* Fondo blanco y texto negro FORZADO */
-        .stApp { background-color: #FFFFFF; color: #000000; }
-        h1, h2, h3, h4, h5, h6, p, li, span, div, label { color: #000000 !important; }
-        
-        /* Inputs (evitar zoom en iPhone) */
+        /* 1. FONDO PRINCIPAL BLANCO */
+        .stApp {
+            background-color: #FFFFFF;
+        }
+
+        /* 2. MENÚ LATERAL (SIDEBAR) */
+        section[data-testid="stSidebar"] {
+            background-color: #F0F2F6; /* Gris muy clarito */
+        }
+        /* Texto del menú lateral en negro */
+        section[data-testid="stSidebar"] * {
+            color: #000000 !important;
+        }
+
+        /* 3. TEXTOS GENERALES EN NEGRO */
+        h1, h2, h3, h4, h5, h6, p, li, span, label { 
+            color: #000000 !important; 
+        }
+
+        /* 4. INPUTS (Cajas de texto) */
         .stTextInput>div>div>input, .stTextArea>div>div>textarea { 
             background-color: #FDF2F2; 
             color: #000000 !important;
             font-size: 16px !important; 
         }
         
-        /* Botones del menú lateral (Radio) */
+        /* 5. BOTONES DEL MENÚ LATERAL */
         .stRadio > div {
             background-color: #F8F9FA;
             padding: 10px;
             border-radius: 10px;
         }
-        
-        /* Botones de acción (Enviar) */
+
+        /* 6. BOTONES DE ACCIÓN (ROJOS CON TEXTO BLANCO) */
         div.stButton > button {
             width: 100%;
-            background-color: #C0392B;
-            color: white !important;
+            background-color: #C0392B !important; /* Rojo */
             border-radius: 15px;
             border: none;
-            font-weight: bold;
             min-height: 50px;
             font-size: 18px !important;
             margin-top: 10px;
         }
         
-        /* Ajustes móvil */
+        /* FUERZA BRUTA PARA EL TEXTO DEL BOTÓN */
+        div.stButton > button p, div.stButton > button div, div.stButton > button span {
+            color: #FFFFFF !important;
+            font-weight: bold !important;
+        }
+
+        /* 7. AJUSTES MÓVIL */
         @media only screen and (max-width: 600px) {
             h1 { font-size: 2rem !important; }
             img { max-width: 100% !important; }
@@ -73,7 +93,6 @@ class ConectorManual:
                 "https://www.googleapis.com/auth/drive"
             ]
             
-            # Credenciales en líneas separadas para seguridad al copiar
             creds = Credentials.from_service_account_info(
                 self.config, 
                 scopes=scopes
@@ -109,8 +128,8 @@ try:
 except:
     pass
 
-# --- MENÚ LATERAL (RESTAURADO A RADIO BUTTONS) ---
-menu = ["🏠 Bienvenida", "🎤 Votaciones", "🏆 Ranking", "💌 Dedicatorias"]
+# --- MENÚ LATERAL ---
+menu = ["🏠 Bienvenida", "🎤 Votaciones", "🏆 Ranking", "💌 Dedicatorias", "🎲 Ruleta"]
 choice = st.sidebar.radio("Navegación:", menu)
 
 # ==========================================
@@ -127,10 +146,11 @@ if choice == "🏠 Bienvenida":
     1. ⭐ Ve a **Votaciones** para puntuar.
     2. 🏆 Mira el **Ranking** en tiempo real.
     3. 💌 Deja un mensaje en **Dedicatorias**.
+    4. 🎲 Juega a la **Ruleta** si no sabes qué cantar.
     """)
 
 # ==========================================
-# 2. VOTACIONES (CRITERIOS RESTAURADOS)
+# 2. VOTACIONES (CON TUS CRITERIOS + FIX DE SUMA)
 # ==========================================
 elif choice == "🎤 Votaciones":
     st.title("Puntúa el Show 📊")
@@ -140,7 +160,7 @@ elif choice == "🎤 Votaciones":
         nombre_artista = st.text_input("Nombre", placeholder="Ej: Juan...", label_visibility="collapsed")
         
         st.write("---")
-        # --- LOS 5 CRITERIOS ORIGINALES ---
+        # --- TUS CRITERIOS PERSONALIZADOS ---
         c1 = st.slider("⭐ Actitud y Energía", 0, 5, 3)
         c2 = st.slider("🎭 Interpretación Dramática", 0, 5, 3)
         c3 = st.slider("🎉 Show y Escena", 0, 5, 3)
@@ -151,7 +171,10 @@ elif choice == "🎤 Votaciones":
             if nombre_artista:
                 try:
                     df = conn.read("votos")
-                    pts = val_energia + val_voz + val_publico
+                    
+                    # Sumamos los 5 criterios
+                    pts = c1 + c2 + c3 + c4 + c5
+                    
                     nuevo = pd.DataFrame([{
                         "Artista": nombre_artista.strip().upper(),
                         "Puntos": pts,
@@ -174,7 +197,6 @@ elif choice == "🏆 Ranking":
         df = conn.read("votos")
         if not df.empty and 'Artista' in df.columns:
             
-            # Lógica segura
             agrupado = df.groupby("Artista")["Puntos"].sum()
             top = agrupado.sort_values(ascending=False).head(3)
             
@@ -206,14 +228,14 @@ elif choice == "🏆 Ranking":
         st.error(f"Error cargando ranking: {e}")
 
 # ==========================================
-# 4. DEDICATORIAS (POP-UP RESTAURADO)
+# 4. DEDICATORIAS
 # ==========================================
 elif choice == "💌 Dedicatorias":
     st.title("Mensajes 💌")
     
-    # --- POP-UP RESTAURADO ---
     @st.dialog("¡Mensaje Recibido! ❤️")
     def popup_agradecimiento():
+        # TU MENSAJE PERSONALIZADO
         st.write("Gracias por venir a mis 30. ¡Sin ti no es lo mismo! 💛🧸")
         st.balloons()
         if st.button("Volver a la fiesta 💃"):
@@ -230,7 +252,6 @@ elif choice == "💌 Dedicatorias":
                     nuevo = pd.DataFrame([{"Nombre": nom if nom else "Anónimo", "Mensaje": msg}])
                     conn.update("dedicatorias", pd.concat([df, nuevo], ignore_index=True))
                     
-                    # Lanzamos el pop-up
                     popup_agradecimiento()
                     
                 except:
@@ -252,22 +273,28 @@ elif choice == "💌 Dedicatorias":
     except: pass
 
 # ==========================================
-# 5. RULETA DEL PÁNICO (NUEVO)
+# 5. RULETA DEL PÁNICO (ACTUALIZADA 2000s)
 # ==========================================
 elif choice == "🎲 Ruleta":
     st.title("🎲 La Ruleta del Pánico")
     st.markdown("¿No sabes qué cantar? ¿O eres valiente? **¡Deja que el destino decida!**")
     
-    import random
-    
-    # Listas de opciones (¡Puedes editar esto a tu gusto!)
+    # Listas actualizadas con más 2000s y desafíos interactivos
     canciones = [
+        # CLÁSICOS
         "Mi Gran Noche - Raphael", "Como una ola - Rocío Jurado", 
         "Wannabe - Spice Girls", "Despacito - Luis Fonsi", 
         "Gasolina - Daddy Yankee", "Sobreviviré - Mónica Naranjo",
         "It's Raining Men - The Weather Girls", "Bailando - Enrique Iglesias",
         "Libre - Nino Bravo", "A quién le importa - Alaska",
-        "Corazón Partío - Alejandro Sanz", "La Macarena - Los del Río"
+        "Corazón Partío - Alejandro Sanz", "La Macarena - Los del Río",
+        # 2000s y TEMAZOS DE FIESTA
+        "Ave María - David Bisbal", "Caminando por la vida - Melendi",
+        "Zapatillas - El Canto del Loco", "Por la raja de tu falda - Estopa",
+        "Aserejé - Las Ketchup", "Obsesión - Aventura",
+        "Papi Chulo - Lorna", "Dile - Don Omar",
+        "Marta, Sebas, Guille y los demás - Amaral", "Torero - Chayanne",
+        "Yo quiero bailar - Sonia y Selena", "Dragostea Din Tei - O-Zone"
     ]
     
     desafios = [
@@ -275,11 +302,16 @@ elif choice == "🎲 Ruleta":
         "🎤 Imitando a Shakira", "🤖 Estilo Robot", 
         "😫 Con mucho drama/llorando", "🕺 Bailando sin parar", 
         "👀 Sin mirar la pantalla", "👫 A dúo con el cumpleañero/a",
-        "🥴 Como si estuvieras borracho/a", "🐭 Con voz de pito"
+        "🥴 Como si estuvieras borracho/a", "🐭 Con voz de pito",
+        # DESAFÍOS NUEVOS
+        "🅰️ Cantar todo SOLO con la vocal 'A'", "🅾️ Cantar todo SOLO con la vocal 'O'",
+        "🤝 Convence a alguien que NO quiera cantar para que suba contigo",
+        "🏋️ Cantar haciendo sentadillas", "🧘 Cantar tumbado en el suelo",
+        "🤐 Cantar sin mover los labios (Ventrílocuo)", "👺 Estilo Ópera / Pavarotti"
     ]
 
-    if st.button("🎰 TIRAR DE LA RULETA 🎰"):
-        # Efecto de carga para dar emoción
+    if st.button("🎰 TIRAAAA DEEEE LA RULETAAAAA 🎰"):
+        # Efecto de carga
         with st.spinner("Girando... 🎡"):
             time.sleep(1.5)
         
