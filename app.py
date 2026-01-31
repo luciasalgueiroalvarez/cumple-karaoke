@@ -129,7 +129,7 @@ except:
     pass
 
 # --- MENÚ LATERAL ---
-menu = ["🏠 Bienvenida", "🎤 Votaciones", "🏆 Ranking", "💌 Dedicatorias", "🎲 Ruleta"]
+menu = ["🏠 Bienvenida", "🎲 Ruleta", "🎤 Votaciones", "🏆 Ranking", "💌 Dedicatorias"]
 choice = st.sidebar.radio("Navegación:", menu)
 
 # ==========================================
