@@ -325,7 +325,7 @@ elif choice == "🎲 Ruleta":
         "🤐 Cantar sin mover los labios", "👺 Estilo Ópera / Pavarotti"
     ]
 
-    if st.button("🎰 TIRAR DE LA RULETA 🎰"):
+    if st.button("TIRAAAA DEEEE LA RULETAAAA"):
         # 1. Creamos un contenedor vacío
         ruleta_placeholder = st.empty()
         
