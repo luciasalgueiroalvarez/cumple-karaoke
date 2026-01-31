@@ -13,19 +13,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS: ESTILO MODO CLARO Y MÓVIL ---
+# --- CSS: MODO OSCURO ARREGLADO Y MÓVIL ---
 def local_css():
     st.markdown("""
         <style>
+        /* Fondo blanco y texto negro FORZADO */
         .stApp { background-color: #FFFFFF; color: #000000; }
-        h1, h2, h3, h4, h5, h6, p, li, span, div { color: #000000 !important; }
+        h1, h2, h3, h4, h5, h6, p, li, span, div, label { color: #000000 !important; }
         
+        /* Inputs (evitar zoom en iPhone) */
         .stTextInput>div>div>input, .stTextArea>div>div>textarea { 
             background-color: #FDF2F2; 
             color: #000000 !important;
             font-size: 16px !important; 
         }
         
+        /* Botones del menú lateral (Radio) */
+        .stRadio > div {
+            background-color: #F8F9FA;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        /* Botones de acción (Enviar) */
         div.stButton > button {
             width: 100%;
             background-color: #C0392B;
@@ -38,6 +48,7 @@ def local_css():
             margin-top: 10px;
         }
         
+        /* Ajustes móvil */
         @media only screen and (max-width: 600px) {
             h1 { font-size: 2rem !important; }
             img { max-width: 100% !important; }
@@ -53,7 +64,6 @@ class ConectorManual:
         try:
             self.config = dict(st.secrets["connections"]["gsheets"])
             
-            # Arreglo de saltos de línea en la clave
             if "private_key" in self.config:
                 pk = self.config["private_key"]
                 self.config["private_key"] = pk.replace("\\n", "\n")
@@ -63,7 +73,7 @@ class ConectorManual:
                 "https://www.googleapis.com/auth/drive"
             ]
             
-            # --- AQUÍ DABA EL ERROR ANTES, AHORA ESTÁ EN VARIAS LÍNEAS ---
+            # Credenciales en líneas separadas para seguridad al copiar
             creds = Credentials.from_service_account_info(
                 self.config, 
                 scopes=scopes
@@ -88,22 +98,20 @@ class ConectorManual:
             sh = self.client.open_by_url(self.url)
             ws = sh.worksheet(worksheet)
             ws.clear()
-            # Convertimos a listas para evitar errores de escritura
             header = data.columns.values.tolist()
             valores = data.values.tolist()
             ws.update([header] + valores)
         except Exception as e:
             st.error(f"Error guardando: {e}")
 
-# Iniciamos la conexión
 try:
     conn = ConectorManual()
 except:
     pass
 
-# --- MENÚ ---
-menu = ["🏠 Bienvenida", "🎤 Votar", "🏆 Ranking", "💌 Dedicatorias"]
-choice = st.sidebar.selectbox("¿Qué quieres hacer?", menu)
+# --- MENÚ LATERAL (RESTAURADO A RADIO BUTTONS) ---
+menu = ["🏠 Bienvenida", "🎤 Votaciones", "🏆 Ranking", "💌 Dedicatorias"]
+choice = st.sidebar.radio("Navegación:", menu)
 
 # ==========================================
 # 1. BIENVENIDA
@@ -112,26 +120,32 @@ if choice == "🏠 Bienvenida":
     st.markdown("<h1 style='text-align: center;'>Lu's 30th Birthday 🎂</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center;'>🎤 Karaoke Edition 🎤</h3>", unsafe_allow_html=True)
     st.image("https://media.giphy.com/media/l4KibWpBGWchSqCRy/giphy.gif", use_container_width=True)
-    st.info("👇 Usa el menú de arriba a la izquierda.")
+    
+    st.info("👇 Usa el menú de la izquierda.")
     st.markdown("""
     **Instrucciones:**
-    1. ⭐ **Vota** a los cantantes.
-    2. 🏆 Mira el **Ranking**.
-    3. 💌 Deja una **Dedicatoria**.
+    1. ⭐ Ve a **Votaciones** para puntuar.
+    2. 🏆 Mira el **Ranking** en tiempo real.
+    3. 💌 Deja un mensaje en **Dedicatorias**.
     """)
 
 # ==========================================
-# 2. VOTAR
+# 2. VOTACIONES (CRITERIOS RESTAURADOS)
 # ==========================================
-elif choice == "🎤 Votar":
+elif choice == "🎤 Votaciones":
     st.title("Puntúa el Show 📊")
+    
     with st.form("voting_form", clear_on_submit=True):
         st.write("👤 **¿Quién canta?**")
         nombre_artista = st.text_input("Nombre", placeholder="Ej: Juan...", label_visibility="collapsed")
+        
         st.write("---")
-        val_energia = st.slider("⭐ Energía", 0, 5, 3)
-        val_voz = st.slider("🎭 Show", 0, 5, 3)
-        val_publico = st.slider("👯 Público", 0, 5, 3)
+        # --- LOS 5 CRITERIOS ORIGINALES ---
+        c1 = st.slider("⭐ Actitud y Energía", 0, 5, 3)
+        c2 = st.slider("🎭 Interpretación Dramática", 0, 5, 3)
+        c3 = st.slider("🎉 Show y Escena", 0, 5, 3)
+        c4 = st.slider("🔄 Originalidad en la elección de la canción", 0, 5, 3)
+        c5 = st.slider("👯 Conexión con el Grupo", 0, 5, 3)
         
         if st.form_submit_button("¡ENVIAR VOTO! 🚀"):
             if nombre_artista:
@@ -145,11 +159,11 @@ elif choice == "🎤 Votar":
                     }])
                     conn.update("votos", pd.concat([df, nuevo], ignore_index=True))
                     st.balloons()
-                    st.success("✅ Voto guardado")
+                    st.success("✅ Voto guardado correctamente")
                 except:
                     st.error("Error de conexión")
             else:
-                st.warning("⚠️ Escribe el nombre")
+                st.warning("⚠️ Escribe el nombre del cantante")
 
 # ==========================================
 # 3. RANKING
@@ -160,19 +174,17 @@ elif choice == "🏆 Ranking":
         df = conn.read("votos")
         if not df.empty and 'Artista' in df.columns:
             
-            # Lógica dividida para evitar errores
+            # Lógica segura
             agrupado = df.groupby("Artista")["Puntos"].sum()
             top = agrupado.sort_values(ascending=False).head(3)
             
             st.write("### 🥇 Podio Actual")
-            
             colores = ["#FFD700", "#C0C0C0", "#CD7F32"]
             medallas = ["🥇 PRIMERO", "🥈 SEGUNDO", "🥉 TERCERO"]
             
             i = 0
             for artista, puntos in top.items():
                 if i < 3:
-                    # Creamos el HTML por partes
                     estilo = f"background-color: {colores[i]}20; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 2px solid {colores[i]}; text-align: center;"
                     
                     html_card = f"""
@@ -189,34 +201,38 @@ elif choice == "🏆 Ranking":
             st.write("📊 **Historial:**")
             st.dataframe(df.tail(5)[["Artista", "Puntos"]], use_container_width=True, hide_index=True)
         else:
-            st.info("Aún no hay votos.")
+            st.info("Aún no hay votos registrados.")
     except Exception as e:
         st.error(f"Error cargando ranking: {e}")
 
 # ==========================================
-# 4. DEDICATORIAS
+# 4. DEDICATORIAS (POP-UP RESTAURADO)
 # ==========================================
 elif choice == "💌 Dedicatorias":
     st.title("Mensajes 💌")
     
+    # --- POP-UP RESTAURADO ---
     @st.dialog("¡Mensaje Recibido! ❤️")
     def popup_agradecimiento():
-        st.markdown("### ¡Muchas gracias! 🧸")
-        st.write("Lu leerá esto con mucho cariño.")
+        st.write("Gracias por venir a mis 30. ¡Sin ti no es lo mismo! 💛🧸")
         st.balloons()
-        if st.button("Volver 💃"):
+        if st.button("Volver a la fiesta 💃"):
             st.rerun()
 
     with st.form("msg_form", clear_on_submit=True):
         nom = st.text_input("Tu nombre:")
         msg = st.text_area("Mensaje para Lu:")
+        
         if st.form_submit_button("ENVIAR MENSAJE ❤️"):
             if msg:
                 try:
                     df = conn.read("dedicatorias")
                     nuevo = pd.DataFrame([{"Nombre": nom if nom else "Anónimo", "Mensaje": msg}])
                     conn.update("dedicatorias", pd.concat([df, nuevo], ignore_index=True))
+                    
+                    # Lanzamos el pop-up
                     popup_agradecimiento()
+                    
                 except:
                     st.error("Error al enviar")
 
