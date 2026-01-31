@@ -251,7 +251,7 @@ elif choice == "💌 Dedicatorias":
                 """, unsafe_allow_html=True)
     except: pass
 
-    # ==========================================
+# ==========================================
 # 5. RULETA DEL PÁNICO (NUEVO)
 # ==========================================
 elif choice == "🎲 Ruleta":
