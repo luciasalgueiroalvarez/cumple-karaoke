@@ -250,3 +250,50 @@ elif choice == "💌 Dedicatorias":
                 </div>
                 """, unsafe_allow_html=True)
     except: pass
+
+    # ==========================================
+# 5. RULETA DEL PÁNICO (NUEVO)
+# ==========================================
+elif choice == "🎲 Ruleta":
+    st.title("🎲 La Ruleta del Pánico")
+    st.markdown("¿No sabes qué cantar? ¿O eres valiente? **¡Deja que el destino decida!**")
+    
+    import random
+    
+    # Listas de opciones (¡Puedes editar esto a tu gusto!)
+    canciones = [
+        "Mi Gran Noche - Raphael", "Como una ola - Rocío Jurado", 
+        "Wannabe - Spice Girls", "Despacito - Luis Fonsi", 
+        "Gasolina - Daddy Yankee", "Sobreviviré - Mónica Naranjo",
+        "It's Raining Men - The Weather Girls", "Bailando - Enrique Iglesias",
+        "Libre - Nino Bravo", "A quién le importa - Alaska",
+        "Corazón Partío - Alejandro Sanz", "La Macarena - Los del Río"
+    ]
+    
+    desafios = [
+        "Normal (¡Te libras!)", "Normal (¡Te libras!)", # Doble probabilidad de normal
+        "🎤 Imitando a Shakira", "🤖 Estilo Robot", 
+        "😫 Con mucho drama/llorando", "🕺 Bailando sin parar", 
+        "👀 Sin mirar la pantalla", "👫 A dúo con el cumpleañero/a",
+        "🥴 Como si estuvieras borracho/a", "🐭 Con voz de pito"
+    ]
+
+    if st.button("🎰 TIRAR DE LA RULETA 🎰"):
+        # Efecto de carga para dar emoción
+        with st.spinner("Girando... 🎡"):
+            time.sleep(1.5)
+        
+        cancion_elegida = random.choice(canciones)
+        desafio_elegido = random.choice(desafios)
+        
+        st.markdown("---")
+        st.markdown(f"### 🎵 Tu canción es: **{cancion_elegida}**")
+        
+        if "Normal" in desafio_elegido:
+            st.success(f"😅 **Modo:** {desafio_elegido}")
+        else:
+            st.error(f"😈 **Desafío:** {desafio_elegido}")
+            st.caption("¡Si no cumples el desafío, chupito!")
+            
+    st.markdown("---")
+    st.info("💡 **Idea:** Si sale una canción que nadie se sabe, ¡tienes derecho a tirar otra vez!")
