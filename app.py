@@ -325,11 +325,20 @@ elif choice == "🎲 Ruleta":
         "🤐 Cantar sin mover los labios", "👺 Estilo Ópera / Pavarotti"
     ]
 
-    if st.button("🎰 TIRAAAA DEEEE LA RULETAAAAA 🎰"):
-        # Efecto de carga
-        with st.spinner("Girando... 🎡"):
-            time.sleep(1.5)
+    if st.button("🎰 TIRAR DE LA RULETA 🎰"):
+        # 1. Creamos un contenedor vacío
+        ruleta_placeholder = st.empty()
         
+        # 2. Mostramos el GIF de la ruleta girando
+        ruleta_placeholder.image("https://media.giphy.com/media/26uf7yJapo82e48yA/giphy.gif", use_container_width=True)
+        
+        # 3. Esperamos 3 segundos (Suspenso...)
+        time.sleep(3)
+        
+        # 4. Borramos el GIF
+        ruleta_placeholder.empty()
+        
+        # 5. Mostramos el resultado
         cancion_elegida = random.choice(canciones)
         desafio_elegido = random.choice(desafios)
         
@@ -343,4 +352,4 @@ elif choice == "🎲 Ruleta":
             st.caption("¡Si no cumples el desafío, chupito!")
             
     st.markdown("---")
-    st.info("💡 **Idea:** Si sale una canción que nadie se sabe, ¡tienes derecho a tirar otra vez!")
+    st.info("Si sale una canción que no te sabes, +10 puntos más por valiente 😂")
