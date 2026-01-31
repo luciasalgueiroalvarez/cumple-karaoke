@@ -330,7 +330,7 @@ elif choice == "🎲 Ruleta":
         ruleta_placeholder = st.empty()
         
         # 2. Mostramos el GIF de la ruleta girando
-        ruleta_placeholder.image("https://media.giphy.com/media/26uf7yJapo82e48yA/giphy.gif", use_container_width=True)
+        ruleta_placeholder.image("https://media1.tenor.com/m/K3jT73UVZhEAAAAC/dog-spinning.gif", use_container_width=True)
         
         # 3. Esperamos 3 segundos (Suspenso...)
         time.sleep(3)
@@ -350,6 +350,3 @@ elif choice == "🎲 Ruleta":
         else:
             st.error(f"😈 **Desafío:** {desafio_elegido}")
             st.caption("¡Si no cumples el desafío, chupito!")
-            
-    st.markdown("---")
-    st.info("Si sale una canción que no te sabes, +10 puntos más por valiente 😂")
